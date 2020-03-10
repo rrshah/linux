@@ -14,6 +14,7 @@
 #define IA32_VMX_PINBASED_CTLS	     0x481
 #define IA32_VMX_PROCBASED_CTLS      0x482
 #define IA32_VMX_PROCBASED_CTLS2     0x48B
+#define IA32_VMX_ENTRY_CTLS          0x484
 #define IA32_VMX_EXIT_CTLS           0x483
 
 
@@ -116,6 +117,21 @@ struct capability_info procbased[21] =
       	{ 31, "Activate Secondary Controls" }
 };
 
+struct capability_info entry_ctls[11] =
+{
+	{ 2, "Load debug controls" },
+	{ 9, "IA-32e mode guest"},
+	{ 10, "Entry to SMM" },
+	{ 11, "Deactivate dual-monitor treatment" },
+	{ 13, "Load IA32_PERF_GLOBAL_CTRL" },
+	{ 14, "Load IA32_PAT" },
+	{ 15, "Load IA32_EFER" },
+	{ 16, "Load IA32_BNDCFGS" },
+	{ 17, "Conceal VMX from PT" },
+	{ 18, "Load IA32_RTIT_CTL" },
+	{ 20, "Load CET state" }
+};
+
 /*
  * report_capability
  *
@@ -177,6 +193,13 @@ detect_vmx_features(void)
 	pr_info("Proc based Controls2 MSR: 0x%llx\n",
 		(uint64_t)(lo | (uint64_t)hi << 32));
 	report_capability(proc_based2, 27, lo, hi);
+	pr_info("------------------------------\n");
+
+	/* Entry controls */
+	rdmsr(IA32_VMX_ENTRY_CTLS, lo, hi);
+	pr_info("Entry based Controls MSR: 0x%llx\n",
+		(uint64_t)(lo | (uint64_t)hi << 32));
+	report_capability(entry_ctls, 11, lo, hi);
 	pr_info("------------------------------\n");
 
 	/* Exit controls */
