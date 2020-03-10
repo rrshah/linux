@@ -12,7 +12,7 @@
  * See SDM volume 4, section 2.1
  */
 #define IA32_VMX_PINBASED_CTLS	     0x481
-#define IA32_VMX_PROCBASED_CTLS2	 0x48B
+#define IA32_VMX_PROCBASED_CTLS2     0x48B
 #define IA32_VMX_EXIT_CTLS           0x483
 
 
@@ -41,7 +41,7 @@ struct capability_info pinbased[5] =
 	{ 7, "Process Posted Interrupts" }
 };
 
-struct capability_info proc_based2[26] =
+struct capability_info proc_based2[27] =
 {
 	{ 0, "Virtualize APIC accesses" },
 	{ 1, "Enable EPT" },
@@ -73,7 +73,7 @@ struct capability_info proc_based2[26] =
 
 };
 
-struct capability_info exit[12] =
+struct capability_info exit_ctls[13] =
 {
 	{ 2, "Save debug controls" },
 	{ 9, "Host address-space size" },
@@ -144,7 +144,7 @@ detect_vmx_features(void)
 	rdmsr(IA32_VMX_PROCBASED_CTLS2, lo, hi);
 	pr_info("Proc based Controls2 MSR: 0x%llx\n",
 		(uint64_t)(lo | (uint64_t)hi << 32));
-	report_capability(proc_based2, 26, lo, hi);
+	report_capability(proc_based2, 27, lo, hi);
 
 	pr_info("------------------------------\n");
 
@@ -152,7 +152,7 @@ detect_vmx_features(void)
 	rdmsr(IA32_VMX_EXIT_CTLS, lo, hi);
 	pr_info("Exit based Controls2 MSR: 0x%llx\n",
 		(uint64_t)(lo | (uint64_t)hi << 32));
-	report_capability(exit, 12, lo, hi);
+	report_capability(exit_ctls, 13, lo, hi);
 }
 
 /*
