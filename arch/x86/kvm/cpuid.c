@@ -1054,8 +1054,9 @@ bool kvm_cpuid(struct kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
 }
 EXPORT_SYMBOL_GPL(kvm_cpuid);
 
-u32 exit_count;
-u32 exit_counter[70]; //Using hardcoded value as we know the number of exits from vmx.h for this kernel
+atomic_t exit_count;
+atomic64_t cycles;
+atomic_t exit_counter[70]; //Using hardcoded value as we know the number of exits from vmx.h for this kernel
 
 EXPORT_SYMBOL_GPL(exit_count);
 EXPORT_SYMBOL_GPL(exit_counter);
@@ -1070,12 +1071,12 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 	ecx = kvm_rcx_read(vcpu);
 
 	if (eax == 0x4FFFFFFD) {
-	  eax = exit_counter[ecx];
+	  eax = atomic_read(&exit_counter[ecx]);
 	  ebx = 0;
 	  ecx = 0;
 	  edx = 0;
 	} else if (eax == 0x4FFFFFFF) {
-	  eax = exit_count;
+	  eax = atomic_read(&exit_count);
 	  ebx = 0;
 	  ecx = 0;
 	  edx = 0;
