@@ -1054,16 +1054,17 @@ bool kvm_cpuid(struct kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
 }
 EXPORT_SYMBOL_GPL(kvm_cpuid);
 
-atomic_t exit_count;
-atomic64_t cycles;
+atomic64_t cycle_counter[70];
 atomic_t exit_counter[70]; //Using hardcoded value as we know the number of exits from vmx.h for this kernel
 
-EXPORT_SYMBOL_GPL(exit_count);
 EXPORT_SYMBOL_GPL(exit_counter);
+EXPORT_SYMBOL_GPL(cycle_counter);
 
 int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 {
 	u32 eax, ebx, ecx, edx;
+	u32 i;
+	
 	if (cpuid_fault_enabled(vcpu) && !kvm_require_cpl(vcpu, 0))
 		return 1;
 
@@ -1076,9 +1077,28 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 	  ecx = 0;
 	  edx = 0;
 	} else if (eax == 0x4FFFFFFF) {
-	  eax = atomic_read(&exit_count);
+	  uint32_t total_exits = 0;
+	  for (i = 0; i < 70; i++) {
+	    total_exits += atomic_read(&exit_counter[i]);
+	  }
+	  eax = total_exits;
 	  ebx = 0;
 	  ecx = 0;
+	  edx = 0;
+	} else 	if (eax == 0x4FFFFFFE) {
+	  uint64_t total_cycles = 0;
+	  for (i = 0; i < 70; i++) {
+	    total_cycles += atomic64_read(&cycle_counter[i]);
+	  }
+	  eax = 0;
+	  ebx = (total_cycles >> 32);
+	  ecx = (u32)(total_cycles & 0xFFFFFFFF);
+	  edx = 0;
+	} else if (eax == 0x4FFFFFFC) {
+	  uint64_t cycles = atomic64_read(&cycle_counter[ecx]);
+	  eax = 0;
+	  ebx = (cycles >> 32);
+	  ecx = (u32)(cycles & 0xFFFFFFFF);
 	  edx = 0;
 	} else {
 	  kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, true);

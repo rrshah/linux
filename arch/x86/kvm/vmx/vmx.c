@@ -5844,7 +5844,10 @@ static int vmx_handle_exit(struct kvm_vcpu *vcpu,
 	u32 exit_reason = vmx->exit_reason;
 	u32 vectoring_info = vmx->idt_vectoring_info;
 	extern atomic_t exit_counter[70];
-	extern atomic_t exit_count;
+	extern atomic64_t cycle_counter[70];
+	
+	uint64_t start = rdtsc();
+
 	trace_kvm_exit(exit_reason, vcpu, KVM_ISA_VMX);
 	/*
 	 * Flush logged GPAs PML buffer, this will make dirty_bitmap more
@@ -5952,9 +5955,12 @@ static int vmx_handle_exit(struct kvm_vcpu *vcpu,
 		goto unexpected_vmexit;
 
 	atomic_inc(&exit_counter[exit_reason]);
-	atomic_inc(&exit_count);
-	return kvm_vmx_exit_handlers[exit_reason](vcpu);
-
+	
+	int ret = kvm_vmx_exit_handlers[exit_reason](vcpu);
+	uint64_t num_cycles = rdtsc() - start;
+	atomic64_add(num_cycles, &cycle_counter[exit_reason]);
+	return ret;
+	
 unexpected_vmexit:
 	vcpu_unimpl(vcpu, "vmx: unexpected exit reason 0x%x\n", exit_reason);
 	dump_vmcs();
